@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Successful</title>
+</head>
+<body>
+    <h1>Processing Successful!</h1>
+    <p>The file has been processed successfully.</p>
+    
+    <p>Processed Data File Path: <strong>{{ output_file }}</strong></p>
+    
+    <!-- You can provide additional instructions or options here if needed -->
+</body>
+</html>

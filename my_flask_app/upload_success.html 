@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Success</title>
+</head>
+<body>
+    <h1>Upload Success!</h1>
+    
+    <h2>Matches:</h2>
+    <ul>
+        {% for match in matches %}
+            <li>{{ match }}</li>
+        {% endfor %}
+    </ul>
+    
+    <h2>Download Processed Data:</h2>
+    <a href="{{ url_for('download_processed_data', processed_data_path=output_file) }}">Download Processed Data</a>
+</body>
+</html>

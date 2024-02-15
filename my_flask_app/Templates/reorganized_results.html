@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reorganized Results</title>
+    <style>
+        /* Add your CSS styles here */
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Reorganized Results</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>VANID</th>
+                <th>Email Type</th>
+                <th>Email</th>
+                <th>Activist Code</th>
+                <th>Date Created</th>
+                <th>Committee Name</th>
+                <th>Date</th>
+                <th>Donated Amount</th>
+                <th>Donor First Name</th>
+                <th>Donor Last Name</th>
+                <th>Donor ZIP</th>
+                <th>Donor Email</th>
+                <th>Match</th>
+                <th>Total Donated</th>
+                <th>Times Donated</th>
+                <th>Donation After Acquisition Date</th>
+                <th>Amount</th>
+                <th>Recurring Total Months</th>
+                <th>Recurrence Number</th>
+                <th>Reference Code 2</th>
+                <th>Reference Code</th>
+                <th>Donor Addr1</th>
+                <th>Donor Addr2</th>
+                <th>Donor City</th>
+                <th>Donor State</th>
+                <th>Donor Country</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for index, row in reorganized_data.iterrows() %}
+                <tr>
+                    <td>{{ row['VANID'] }}</td>
+                    <td>{{ row['Email Type'] }}</td>
+                    <td>{{ row['Email'] }}</td>
+                    <td>{{ row['Activist Code'] }}</td>
+                    <td>{{ row['Date Created'] }}</td>
+                    <td>{{ row['Committee Name'] }}</td>
+                    <td>{{ row['Date'] }}</td>
+                    <td>{{ row['Donated Amount'] }}</td>
+                    <td>{{ row['Donor First Name'] }}</td>
+                    <td>{{ row['Donor Last Name'] }}</td>
+                    <td>{{ row['Donor ZIP'] }}</td>
+                    <td>{{ row['Donor Email'] }}</td>
+                    <td>{{ row['Match'] }}</td>
+                    <td>{{ row['Total Donated'] }}</td>
+                    <td>{{ row['Times Donated'] }}</td>
+                    <td>{{ row['Donation After Acquisition Date'] }}</td>
+                    <td>{{ row['Amount'] }}</td>
+                    <td>{{ row['Recurring Total Months'] }}</td>
+                    <td>{{ row['Recurrence Number'] }}</td>
+                    <td>{{ row['Reference Code 2'] }}</td>
+                    <td>{{ row['Reference Code'] }}</td>
+                    <td>{{ row['Donor Addr1'] }}</td>
+                    <td>{{ row['Donor Addr2'] }}</td>
+                    <td>{{ row['Donor City'] }}</td>
+                    <td>{{ row['Donor State'] }}</td>
+                    <td>{{ row['Donor Country'] }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>

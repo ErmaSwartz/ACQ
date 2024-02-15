@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Result</title>
+</head>
+<body>
+    <h1>Join Operation Completed</h1>
+    <p>Data has been successfully written to: {{ output_file }}</p>
+
+    <h2>Instructions:</h2>
+    <p>Go to ActBlue and download the donation data from AFTER the date of the FIRST acquisition, copy the following columns into the joined data set:</p>
+    <ul>
+        <li>Date</li>
+        <li>Amount</li>
+        <li>Recurring Total Months</li>
+        <li>Recurrence Number</li>
+        <li>Reference Code 2</li>
+        <li>Reference Code</li>
+        <li>Donor First Name</li>
+        <li>Donor Last Name</li>
+        <li>Donor Addr1</li>
+        <li>Donor Addr2</li>
+        <li>Donor City</li>
+        <li>Donor State</li>
+        <li>Donor ZIP</li>
+        <li>Donor Country</li>
+        <li>Donor Email</li>
+    </ul>
+
+<!-- Add a form for uploading the additional dataset -->
+<h2>Upload Joined Dataset</h2>
+<form action="/uploads" method="POST" enctype="multipart/form-data">
+    <label for="edited_file">Upload Edited File (CSV file):</label>
+    <input type="file" name="file" id="edited_file" accept=".csv">
+    <br>
+    <input type="submit" value="Upload">
+</form>
+
+    {% if message %}
+        <p>{{ message }}</p>
+    {% endif %}
+</body>
+</html>
