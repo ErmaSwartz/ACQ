@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Result</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f7f4; /* Light green background */
+            color: #333; /* Dark gray text color */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 20px;
+            background-color: #fff; /* White container background */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Soft shadow effect */
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c7337; /* Dark green header text color */
+        }
+
+        h2 {
+            color: #2c7337; /* Dark green subheader text color */
+        }
+
+        h4 {
+            color: #666; /* Gray instruction text color */
+            font-weight: normal;
+        }
+
+        p {
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        input[type="submit"] {
+            background-color: #2c7337; /* Dark green submit button background */
+            color: #fff; /* White submit button text color */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #1e4f26; /* Darker green on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Join Operation Completed</h1>
+        <p>Data has been successfully written to: {{ output_file }}</p>
+        <h5>Your data from NGP has been joined, now you have the acquisition data and activist codes alongside the correct email addresses</h5>
+        <h1>You are now going to manually input the fundraising data yourself</h1>
+        <h2>Instructions:</h2>
+        <p>Go to ActBlue and download the donation data from AFTER the date of the FIRST acquisition, copy the following columns into the joined data set:</p>
+        <ul>
+            <li>Date</li>
+            <li>Amount</li>
+            <li>Recurring Total Months</li>
+            <li>Recurrence Number</li>
+            <li>Reference Code 2</li>
+            <li>Reference Code</li>
+            <li>Donor First Name</li>
+            <li>Donor Last Name</li>
+            <li>Donor Addr1</li>
+            <li>Donor Addr2</li>
+            <li>Donor City</li>
+            <li>Donor State</li>
+            <li>Donor ZIP</li>
+            <li>Donor Country</li>
+            <li>Donor Email</li>
+        </ul>
+        <h4>Keep in mind, once you have pasted the information listed above, the data from NGP and ActBlue will not be visually in line. Do not concern yourself with this, all of the functions are written to find the match before calculating the results we need.</h4>
+
+        <!-- Add a form for uploading the additional dataset -->
+        <h2>Upload Joined Dataset</h2>
+        <p>You should copy and paste the data outlined above, and save it locally.</p>
+        <p>We are going to generate some important data points and save them to a new file. We will know if the donors we have are from the Acquisition list, we will know how often and how much they each donated, their average donation, and we will know if they donated before or after we added them to the list. This could take several minutes depending on the size of your file and the speed of your computer. </p>
+        <form action="/uploads" method="POST" enctype="multipart/form-data">
+            <label for="edited_file">Upload Edited File (CSV file):</label>
+            <input type="file" name="file" id="edited_file" accept=".csv">
+            <br>
+            <input type="submit" value="Upload">
+        </form>
+
+        {% if message %}
+            <p>{{ message }}</p>
+        {% endif %}
+    </div>
+</body>
+</html>

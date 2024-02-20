@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Acquisition Data Analysis</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f7f4; /* Light green background */
+            color: #333; /* Dark gray text color */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            padding: 20px;
+            background-color: #fff; /* White container background */
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1); /* Soft shadow effect */
+        }
+
+        h1 {
+            color: #2c7337; /* Dark green header text color */
+        }
+
+        p {
+            margin-bottom: 20px;
+        }
+
+        form {
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #2c7337; /* Dark green label text color */
+        }
+
+        input[type="file"] {
+            margin-bottom: 10px;
+        }
+
+        input[type="submit"] {
+            background-color: #2c7337; /* Dark green submit button background */
+            color: #fff; /* White submit button text color */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #1e4f26; /* Darker green on hover */
+        }
+
+        .skip-button {
+            background-color: #ccc; /* Gray skip button background */
+            color: #333; /* Dark gray skip button text color */
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .skip-button:hover {
+            background-color: #999; /* Darker gray on hover */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Acquisition Data Analysis</h1>
+        <p>This application is going to walk you through processing the data to get the results you need for your clients. It is <b>crucial</b> you go step by step and read <b>ALL</b> the instructions.</p>
+        <h2>Some things to keep in mind:</h2>
+        <p>A file path on your computer is like a set of directions to find a specific file. It tells your computer where the file is located in its filing system. Think of it as a digital address that helps your computer navigate through folders and directories to locate the file you're looking for. It includes the names of folders, separated by slashes, leading to the file you want to access. This matters because without the correct path, the code will not be able to call the files it needs to perform the correct functions.</p>
+        <p><b>Your files MUST be CSV files, any other format will break the code.</b></p>
+        <p>You have to download the files and save them in the proper places in order for this application to work. When you downloaded this application, all of the scripts were downloaded in a specific file path. If for some reason that path is altered, the code will break. Keep the path the same, and follow prompts to move files to ensure you do not have to re-run the code for the same client because your files were replaced with another clients information. If your downloaded files are not in your documents folder on your computer, ensure you move the entire downloaded folder into documents.</p>
+        <p>The final thing to keep in mind is that each time these scripts run, they are going to change the name of your files to be generic and saved in the same places. So if you don't rename the files and/or move them somewhere else, they will get overridden each time you use the app. Make sure you organize each of your processed files after the final download, and make sure you know which client the data belongs to or you will get confused. There is no need to hold on to old data, one time passes and you need to refresh the results for your client, you can delete old files. If you happen to need them again, the scripts will always work and you can segment out the specific dates you need.</p>
+        <h2>Upload two CSV files for join operation</h2>
+        <p>This function is going to join your data. Right now you have data that contains the activist codes we need to identify those we added through acquisition, and email addresses from the list. By joining the data we get a more accurate picture of what is happening with our lists.</p>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <label for="file1">Input emails_ngp CSV file:</label>
+            <input type="file" name="emails_ngp" id="file1" accept=".csv">
+            <br>
+            <label for="file2">Input activistcodes CSV file:</label>
+            <input type="file" name="activistcodes" id="file2" accept=".csv">
+            <br>
+            <input type="submit" value="Upload">
+        </form>
+    </div>
+</body>
+</html>

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Success</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* Custom styles for the page */
+        body {
+            padding-top: 50px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        #result {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        #result table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        #result th, #result td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        #result th {
+            background-color: #f1f1f1;
+        }
+        .statistics-section {
+            margin-top: 50px;
+        }
+        .statistic-card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .statistic-card h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light fixed-top">
+        <a class="navbar-brand" href="#">Acquisition Data</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="#"></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"></a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"></a>
+                </li>
+                <!-- Add a new link to the "Render Maps" section in the navbar -->
+                <li class="nav-item">
+                    <a class="nav-link" href="/render_maps">Render Maps</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h1 class="text-center">File Successfully Processed</h1>
+        <h2 class="text-center">Your new file is in the uploads folder on your computer</h2>
+        <p class="text-center">The path should be the following: {{ output_file }}</p>
+        <p class="text-center">Ensure you save this file somewhere else before running this program again. 
+            <br> If you fail to save the file under a different name or in a different 
+            <br> place the query will run again on a different data set and replace the existing data you just processed</p>
+        
+        <div class="statistics-section">
+            <h2 class="text-center mt-5">Key Statistics</h2>
+            <center><h4>All of the following statistics are built to condition on the match function in your data</h4></center>
+            <center><p>The match condition is telling us if the information we put in from actblue is present in the data you pulled from NGP</p></center>
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Total Donated</h3>
+                        <p>$<span id="totalDonated">Calculating...</span></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Median Donation</h3>
+                        <p>$<span id="medianDonation">Calculating...</span></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Average Donation</h3>
+                        <p>$<span id="averageDonation">Calculating...</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Number of Donors</h3>
+                        <p><span id="numDonors">Calculating...</span></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Median Times Donated</h3>
+                        <p><span id="medianTimesDonated">Calculating...</span></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Average Times Donated</h3>
+                        <p><span id="averageTimesDonated">Calculating...</span></p>
+                    </div>
+                </div>
+            </div>
+            <!-- Additional statistics -->
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Recurring Donations Count</h3>
+                        <p><span id="recurringDonationsCount">Calculating...</span></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Amount Raised from Recurring Donations</h3>
+                        <p>$<span id="AmountRaisedRecurring">Calculating...</span></p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Active Recurring Donors</h3>
+                        <p><span id="recurringStillCount">Calculating...</span></p>
+                    </div>
+                </div>
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Average Time People Sign Up For Recurring Donations</h3>
+                        <p><span id="averageTimeSignUp">Calculating...</span> months</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="statistic-card text-center">
+                        <h3>Median Time People Sign Up For Recurring Donations</h3>
+                        <p><span id="medianTimeSignUp">Calculating...</span> months</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        // Function to fetch and update statistics
+        function updateStatistics() {
+            // Function to calculate total donated Amount
+            fetch('/total_donated')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('totalDonated').innerText = data.total_donated;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to calculate median donation Amount
+            fetch('/median_donation')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('medianDonation').innerText = data.median_donation;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to calculate average donation Amount
+            fetch('/average_donation')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('averageDonation').innerText = data.average_donation;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to count unique donors
+            fetch('/count_donors')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('numDonors').innerText = data.matched_data_count;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to calculate median times donated
+            fetch('/median_times_donated')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('medianTimesDonated').innerText = data.median_times_donated;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to calculate average times donated
+            fetch('/average_times_donated')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('averageTimesDonated').innerText = data.average_times_donated;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Additional statistics
+            // Function to fetch recurring donations count
+            fetch('/recurring_donations_count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('recurringDonationsCount').innerText = data.recurring_donors_count;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to fetch Amount raised from recurring donations
+            fetch('/Amount_raised_recurring')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('AmountRaisedRecurring').innerText = data.Amount_raised_recurring;
+                })
+                .catch(error => console.error('Error:', error));
+
+            // Function to fetch recurring donors still count
+            fetch('/recurring_still_count')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('recurringStillCount').innerText = data.recurring_still_count;
+                })
+                .catch(error => console.error('Error:', error));
+
+             // Function to fetch average and median time people sign up for
+             fetch('/calculate_median_average_time')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('medianTimeSignUp').innerText = data.median_time_sign_up;
+                    document.getElementById('averageTimeSignUp').innerText = data.average_time_sign_up;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Call the function to update statistics
+        updateStatistics();
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
