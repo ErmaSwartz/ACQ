@@ -16,7 +16,12 @@ import geopy
 from geopy.exc import GeocoderUnavailable
 from geopy.geocoders import Nominatim
 import time
-
+import plotly.graph_objs as go
+import requests
+from datetime import datetime
+from collections import defaultdict
+from io import BytesIO 
+import base64 
 
 # Create a Flask app instance
 app = Flask(__name__, template_folder='Templates')
@@ -24,6 +29,9 @@ app = Flask(__name__, template_folder='Templates')
 # Define the upload folder for storing uploaded files
 UPLOAD_FOLDER = 'uploads/'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# Define the coordinates variable globally
+coordinates = []
 
 # Route for the main page where users can upload files
 @app.route('/')
@@ -108,12 +116,12 @@ def uploads():
     data['unique_index'] = range(1, len(data) + 1)
     data.set_index('unique_index', inplace=True)
 
-    # Drop the unnamed columns
-    unnamed_columns = [col for col in data.columns if col.startswith('Unnamed')]
-    data.drop(columns=unnamed_columns, inplace=True)
+    # # Drop the unnamed columns
+    # unnamed_columns = [col for col in data.columns if col.startswith('Unnamed')]
+    # data.drop(columns=unnamed_columns, inplace=True)
    
     # Process uploaded file and count name occurrences
-    name_counts = data['Donor Email'].value_counts()
+    name_counts = data.groupby('Donor Email').size()
     
     # Calculate total_donated: sum of 'Amount' for each donor email
     total_donated = data.groupby('Donor Email')['Amount'].sum()
@@ -128,8 +136,8 @@ def uploads():
 
     # Find Matches between donor emails and emails
     Matches = []
-    for email in data['Email']:
-        if email in data['Donor Email'].values:
+    for email in data['Donor Email']:
+        if email in data['Email'].values:
             Matches.append('Match')
         else:
             Matches.append('No Match')
@@ -144,7 +152,7 @@ def uploads():
         if Matching_row is not None:
             is_after = row['Date'] > Matching_row['Date Created']  # Compare 'Date' with 'Date Created'
         else:
-            is_after = False  # Set to False if no Matching row is found
+            is_after = True  # Set to False if no Matching row is found
         is_date_after.append(is_after)
     
     data['is_date_after'] = is_date_after
@@ -177,8 +185,8 @@ def calculate_total_donated():
     # Read the processed data from the CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
     
-    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match'
-    Matched_data = processed_data[processed_data['Matches'] == 'Match']
+    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match' and 'Amount' column is not NaN
+    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Amount'].isna())]
     
     # Calculate the total Amount donated by summing the 'Amount' column
     total_donated = Matched_data['Amount'].sum()
@@ -192,8 +200,8 @@ def calculate_median_donation():
     # Read the processed data from the CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
     
-    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match'
-    Matched_data = processed_data[processed_data['Matches'] == 'Match']
+    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match' and 'Amount' column is not NaN
+    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Amount'].isna())]
     
     # Calculate the median donation Amount from the 'Amount' column
     median_donation = Matched_data['Amount'].median()
@@ -207,8 +215,8 @@ def calculate_average_donation():
     # Read the processed data from the CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
     
-    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match'
-    Matched_data = processed_data[processed_data['Matches'] == 'Match']
+    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match' and 'Amount' column is not NaN
+    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Amount'].isna())]
     
     # Calculate the average donation Amount per donor from the 'Amount' column
     average_donation = Matched_data['Amount'].mean()
@@ -222,8 +230,8 @@ def count_donors():
     # Read the processed data from the CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
     
-    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match'
-    Matched_data = processed_data[processed_data['Matches'] == 'Match']
+    # Filter the DataFrame to include only rows where 'Matches' column has value 'Match' and 'Donor Email' column is not NaN
+    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Donor Email'].isna())]
     
     # Count the number of unique donors from the 'Donor Email' column
     Matched_data_count = Matched_data['Donor Email'].nunique()
@@ -236,8 +244,8 @@ def count_donors():
 def calculate_average_times_donated():
     # Read the processed data CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
-    # Filter the data to include only matches
-    Matched_data = processed_data[processed_data['Matches'] == 'Match']
+    # Filter the data to include only matches and where 'Donor Email' is not NaN
+    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Donor Email'].isna())]
     # Calculate the mean of the number of times each donor has donated
     average_times_donated = Matched_data['Donor Email'].value_counts().mean()
     # Return the result as JSON
@@ -248,13 +256,12 @@ def calculate_average_times_donated():
 def calculate_median_times_donated():
     # Read the processed data CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
-    # Filter the data to include only matches
-    Matched_data = processed_data[processed_data['Matches'] == 'Match']
+    # Filter the data to include only matches and where 'Donor Email' is not NaN
+    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Donor Email'].isna())]
     # Calculate the median of the number of times each donor has donated
     median_times_donated = Matched_data['Donor Email'].value_counts().median()
     # Return the result as JSON
     return jsonify({'median_times_donated': median_times_donated})
-
 # Route to count the number of recurring donations
 @app.route('/recurring_donations_count', methods=['GET'])
 def recurring_donations_count():
@@ -309,57 +316,137 @@ def preprocess_and_calculate_median_average_time():
 
     return median_time, average_time
 
-from flask import render_template
-
-app = Flask(__name__)
-
 @app.route('/render_maps')
 def render_maps():
-    # Load data 
-    UPLOAD_FOLDER = 'uploads/'
-    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-    data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
-    
-    # Create a map centered at a specific location in Oregon
-    donation_map = folium.Map(location=[44.05, -123.09], zoom_start=7)
-    # Drop rows with missing ZIP code data
-    data.dropna(subset=['Donor ZIP'], inplace=True)
-    # Initialize a geocoder
-    geolocator = Nominatim(user_agent="my_geocoder")
+    coordinates = []  # Initialize coordinates
+    if not coordinates:  
+        data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
+        for index, row in data.iterrows():
+            address = f"{row['Donor City']}, {row['Donor State']} {row['Donor ZIP']}"
+            coordinates.append(geocode_address(address))
 
-    # Function to geocode ZIP codes and return latitude and longitude
-    def geocode_zip(zip_code):
-        location = geolocator.geocode(zip_code)
-        if location:
-            return location.latitude, location.longitude
+    # Define state map center and zoom level
+    state_map_center = [40.7128, -74.0060]  # Example center coordinates (New York City)
+    state_map_zoom = 10  # Example zoom level
+
+    # Prepare data for the country heat map
+    country_heatmap_data = []  # You need to define this data based on your requirements
+
+    return render_template('map.html', coordinates=coordinates, state_map={'center': state_map_center, 'zoom': state_map_zoom}, country_heatmap_data=country_heatmap_data)
+
+def geocode_address(address):
+    api_key = ""  
+    url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={api_key}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        if data['status'] == 'OK':
+            location = data['results'][0]['geometry']['location']
+            return location['lat'], location['lng']
         else:
-            return None, None
-
-    # Iterate through the DataFrame and add markers for each donor location
-    for index, row in data.iterrows():
-        # Check if ZIP code is available
-        if pd.notnull(row['Donor ZIP']):
-            # Use ZIP code to get approximate location
-            latitude, longitude = geocode_zip(row['Donor ZIP'])
-            if latitude is not None and longitude is not None:
-                folium.Marker([latitude, longitude], popup=row['Donor ZIP']).add_to(donation_map)
-            else:
-                print(f"Geocoding failed for ZIP code: {row['Donor ZIP']}")
+            print(f"Geocoding failed for address: {address}")
+            return None
+    else:
+        print("Failed to retrieve data from the API")
+        return None
     
-    # Save the map as an HTML file
-    map_path = "static/maps.html"
-    donation_map.save(map_path)
 
-    # Render the maps.html template
-    return render_template('maps.html')
+# Route to /timechart
+@app.route('/timechart')
+def time_chart():
+    # Read the CSV
+    data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'sample_data.csv'))
+    
+    # Pull donor emails and date to create a dictionary where donor emails = key and date = value
+    donors = dict(zip(data['Donor Email'], pd.to_datetime(data['date'])))
 
+    # Pull emails and date created to make a dictionary where emails = key and date created = value
+    acquisition = dict(zip(data['Email'], pd.to_datetime(data['date_created'])))
 
-# Route to preprocess data, calculate median and average time, and return results
-@app.route('/calculate_median_average_time', methods=['GET'])
-def calculate_median_average_time_route():
-    median_time, average_time = preprocess_and_calculate_median_average_time()
-    return jsonify({'median_time_sign_up': median_time, 'average_time_sign_up': average_time})
+    # Loop through donors and find any keys with duplicate values
+    for key, value in donors.items():
+        if list(donors.values()).count(value) > 1:
+            # Take the earliest date
+            min_date = min(value for key, value in donors.items() if value == value)
+            # Drop other values
+            for k, v in list(donors.items()):
+                if v != min_date:
+                    donors.pop(k)
+
+    # Grab each key from Donors dictionary and find matching key in Acquisition
+    donors_after_acquisition = {}
+    for donor_email, donation_date in donors.items():
+        if donor_email in acquisition:
+            # Subtract the corresponding value in Donors from the value (date created) in Acquisition
+            days_since_acquisition = (donation_date - acquisition[donor_email]).days
+            donors_after_acquisition[days_since_acquisition] = donors_after_acquisition.get(days_since_acquisition, 0) + 1
+
+    # Create a bar chart
+    x_values = list(donors_after_acquisition.keys())
+    y_values = list(donors_after_acquisition.values())
+
+    # Create the trace
+    trace = go.Bar(
+        x=x_values,
+        y=y_values
+    )
+
+    # Create the layout
+    layout = go.Layout(
+        title='Donors After Acquisition',
+        xaxis=dict(title='Days Since Acquisition'),
+        yaxis=dict(title='Number of Donors')
+    )
+
+    # Create the figure
+    figure = go.Figure(data=[trace], layout=layout)
+
+    # Convert the figure to JSON and pass it to the template
+    plot_div = figure.to_json()
+    return render_template('timechart.html', plot_div=plot_div)
+# @app.route('/recurring-donors-chart')
+# def recurring_donors_chart():
+#     # Read the processed data
+#     data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
+
+#     # Filter data for 'Match' in 'Matches' column
+#     recurring_donors = data[data['Matches'] == 'Match']
+
+#     # Plot the distribution of recurring donors based on the total amount of donations
+#     plt.figure(figsize=(10, 6))
+#     recurring_donors['name_counts'].hist(bins=30, color='skyblue', edgecolor='black')
+#     plt.xlabel('Total Amount of Donations')
+#     plt.ylabel('Frequency')
+#     plt.title('Distribution of Recurring Donors')
+#     plt.grid(True)
+#     plt.tight_layout()
+
+#     # Save the plot to a BytesIO buffer
+#     buffer = BytesIO()
+#     plt.savefig(buffer, format='png')
+#     buffer.seek(0)
+
+#     # Encode the plot data as base64 string
+#     plot_data = base64.b64encode(buffer.getvalue()).decode()
+    
+#     # Close the plot to avoid memory leaks
+#     plt.close()
+
+#     # Pass the plot data to the HTML template
+#     return render_template('timechart.html', recurring_donors_plot_data=plot_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
 
+    #Route to /timechart 
+    #Read the csv 
+        #data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'sample_data.csv'))
+    #pull donor emails and date --> create a dictionary where donor emails= key date = value [dictionary named Donors]
+    #pull emails and date created --> make a dictionary where emails = key and date created = value [dictionary name acquisition]
+    #loop through donors and find any keys with duplicate values 
+    #take the earliest date from date 
+    #drop other values 
+    #Grab each key from Donors dictionary and find matching key in Acquisition, where there is no matching key, those keys can be dropped 
+    #where there is a matching key, subtract the corresponding value in Donors from the value (date created) in Aquisiton
+    #create a bar chart where the x axis is days since Acquisition and y is how many donors donated after that many days 
+    #render the template to timechart.html 
