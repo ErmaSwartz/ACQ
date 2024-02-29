@@ -184,16 +184,18 @@ def calculate_top_zip_codes_and_city():
 def calculate_total_donated():
     # Read the processed data from the CSV file
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
-    
+
     # Filter the DataFrame to include only rows where 'Matches' column has value 'Match' and 'Amount' column is not NaN
-    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Amount'].isna())]
+    matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Amount'].isna())]
     
-    # Calculate the total Amount donated by summing the 'Amount' column
-    total_donated = Matched_data['Amount'].sum()
+    # Group by 'Donor Email' and 'Amount' and sum the unique amounts for each donor
+    grouped_data = matched_data.groupby(['Donor Email', 'Amount']).size().reset_index(name='counts')
+    total_donated = grouped_data['Amount'].sum()
+    
+    print(total_donated)
     
     # Return the total donated Amount as a JSON response
     return jsonify({'total_donated': total_donated})
-
 # Route to calculate the median donation Amount from Matching donors
 @app.route('/median_donation', methods=['GET'])
 def calculate_median_donation():
@@ -231,13 +233,16 @@ def count_donors():
     processed_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
     
     # Filter the DataFrame to include only rows where 'Matches' column has value 'Match' and 'Donor Email' column is not NaN
-    Matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Donor Email'].isna())]
+    matched_data = processed_data[(processed_data['Matches'] == 'Match') & (~processed_data['Donor Email'].isna())]
     
-    # Count the number of unique donors from the 'Donor Email' column
-    Matched_data_count = Matched_data['Donor Email'].nunique()
+    # Group by 'Donor Email' and count the number of unique donors
+    matched_data_count = matched_data.groupby('Donor Email').size().count()
+    
+    # Print the count
+    print('Number of unique donors:', matched_data_count)
     
     # Return the count of unique donors as a JSON response
-    return jsonify({'Matched_data_count': Matched_data_count})
+    return jsonify({'matched_data_count': matched_data_count})
 
 # Route to calculate the average times donated
 @app.route('/average_times_donated', methods=['GET'])
@@ -297,9 +302,11 @@ def recurring_still_count():
     return jsonify({'recurring_still_count': recurring_still_count})
 
 # Function to preprocess the data and calculate the median and average time people sign up for recurring donations
-def preprocess_and_calculate_median_average_time():
+def preprocess():
     # Read the raw data CSV file
     raw_data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
+    # Convert 'Recurrence Number' to numeric, ignoring errors
+    raw_data['Recurrence Number'] = pd.to_numeric(raw_data['Recurrence Number'], errors='coerce')
 
     # Replace 'unlimited' in 'Recurring Total Months' with the value from 'Recurrence Number'
     raw_data.loc[raw_data['Recurring Total Months'] == 'unlimited', 'Recurring Total Months'] = raw_data.loc[raw_data['Recurring Total Months'] == 'unlimited', 'Recurrence Number']
@@ -310,11 +317,19 @@ def preprocess_and_calculate_median_average_time():
     # Filter rows where 'Recurring Total Months' is not NaN or empty
     valid_recurring_months = raw_data['Recurring Total Months'].dropna()
 
-    # Calculate median and average
+    return valid_recurring_months
+@app.route('/calculate_median_average_time', methods=['GET'])
+def get_median_average_time():
+    # Call the function to preprocess data and calculate median and average time
+    valid_recurring_months = preprocess()
     median_time = valid_recurring_months.median()
     average_time = valid_recurring_months.mean()
-
-    return median_time, average_time
+    print(median_time, average_time)
+    # Log median and average times to a file
+    app.logger.info(f"Median time: {median_time}, Average time: {average_time}")
+    
+    # Return the calculated values as JSON response
+    return jsonify({'median_time': median_time, 'average_time': average_time})
 
 @app.route('/render_maps')
 def render_maps():
@@ -351,102 +366,87 @@ def geocode_address(address):
         return None
     
 
-# Route to /timechart
 @app.route('/timechart')
-def time_chart():
-    # Read the CSV
-    data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'sample_data.csv'))
-    
-    # Pull donor emails and date to create a dictionary where donor emails = key and date = value
-    donors = dict(zip(data['Donor Email'], pd.to_datetime(data['date'])))
+def timechart():
+    # Read the CSV file
+    data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
+    # Print out the column names to check for the correct name
+    print(data.columns)
 
-    # Pull emails and date created to make a dictionary where emails = key and date created = value
-    acquisition = dict(zip(data['Email'], pd.to_datetime(data['date_created'])))
+    # Convert 'Date' and 'Date Created' columns to datetime with flexible format
+    data['Date'] = pd.to_datetime(data['Date'], errors='coerce', infer_datetime_format=True)
+    data['Date Created'] = pd.to_datetime(data['Date Created'], errors='coerce', infer_datetime_format=True)
 
-    # Loop through donors and find any keys with duplicate values
-    for key, value in donors.items():
-        if list(donors.values()).count(value) > 1:
-            # Take the earliest date
-            min_date = min(value for key, value in donors.items() if value == value)
-            # Drop other values
-            for k, v in list(donors.items()):
-                if v != min_date:
-                    donors.pop(k)
+    # Create a dictionary where donor emails are keys and dates are values
+    donors = dict(zip(data['Donor Email'], data['Date']))
+    print('donor', donors)
 
-    # Grab each key from Donors dictionary and find matching key in Acquisition
-    donors_after_acquisition = {}
-    for donor_email, donation_date in donors.items():
-        if donor_email in acquisition:
-            # Subtract the corresponding value in Donors from the value (date created) in Acquisition
-            days_since_acquisition = (donation_date - acquisition[donor_email]).days
-            donors_after_acquisition[days_since_acquisition] = donors_after_acquisition.get(days_since_acquisition, 0) + 1
+    # Create a dictionary where emails are keys and date created are values
+    acquisition = dict(zip(data['Email'], data['Date Created']))
+    print('acq', acquisition)
 
-    # Create a bar chart
-    x_values = list(donors_after_acquisition.keys())
-    y_values = list(donors_after_acquisition.values())
+    # Create a dictionary to store the earliest date for each email
+    earliest_dates = {}
 
-    # Create the trace
-    trace = go.Bar(
-        x=x_values,
-        y=y_values
-    )
+    # Iterate through the donors dictionary
+    for email, date in donors.items():
+        # If the email is already in the earliest_dates dictionary
+        if email in earliest_dates:
+            # Check if the current date is earlier than the stored date
+            if date < earliest_dates[email]:
+                # Update the earliest date for this email
+                earliest_dates[email] = date
+        else:
+            # If the email is not yet in the earliest_dates dictionary, add it
+            earliest_dates[email] = date
+    print('earliest dates', earliest_dates)
 
-    # Create the layout
-    layout = go.Layout(
-        title='Donors After Acquisition',
-        xaxis=dict(title='Days Since Acquisition'),
-        yaxis=dict(title='Number of Donors')
-    )
+    # Calculate the amount of days between adding and donating
+    days_between = []
+    for email, donor_date in donors.items():
+        if email in acquisition:
+            if pd.notna(donor_date) and pd.notna(acquisition[email]):
+                # Check if both dates are valid
+                days = (donor_date - acquisition[email]).days
+                days_between.append(days)
+                print(f"Found corresponding acquisition date for email: {email}")
+            else:
+                print(f"Error: Invalid date for email: {email}")
+        else:
+            print(f"No corresponding acquisition date found for email: {email}")
+    # Filter out negative values
+    positive_days_between = [days for days in days_between if days >= 0]
 
-    # Create the figure
-    figure = go.Figure(data=[trace], layout=layout)
+    # Group the filtered list by days
+    grouped_data = pd.Series(positive_days_between).value_counts().sort_index()
+    # Prepare data for rendering the template
+    x_values = grouped_data.index.tolist()
+    y_values = grouped_data.values.tolist()
+    print(x_values)
+    print(y_values)
+    print(days_between)
 
-    # Convert the figure to JSON and pass it to the template
-    plot_div = figure.to_json()
-    return render_template('timechart.html', plot_div=plot_div)
-# @app.route('/recurring-donors-chart')
-# def recurring_donors_chart():
-#     # Read the processed data
-#     data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'processed_data.csv'))
-
-#     # Filter data for 'Match' in 'Matches' column
-#     recurring_donors = data[data['Matches'] == 'Match']
-
-#     # Plot the distribution of recurring donors based on the total amount of donations
-#     plt.figure(figsize=(10, 6))
-#     recurring_donors['name_counts'].hist(bins=30, color='skyblue', edgecolor='black')
-#     plt.xlabel('Total Amount of Donations')
-#     plt.ylabel('Frequency')
-#     plt.title('Distribution of Recurring Donors')
-#     plt.grid(True)
-#     plt.tight_layout()
-
-#     # Save the plot to a BytesIO buffer
-#     buffer = BytesIO()
-#     plt.savefig(buffer, format='png')
-#     buffer.seek(0)
-
-#     # Encode the plot data as base64 string
-#     plot_data = base64.b64encode(buffer.getvalue()).decode()
-    
-#     # Close the plot to avoid memory leaks
-#     plt.close()
-
-#     # Pass the plot data to the HTML template
-#     return render_template('timechart.html', recurring_donors_plot_data=plot_data)
-
+    return render_template('timechart.html', x_values=x_values, y_values=y_values)
 if __name__ == '__main__':
     app.run(debug=True)
 
     #Route to /timechart 
     #Read the csv 
         #data = pd.read_csv(os.path.join(app.config['UPLOAD_FOLDER'], 'sample_data.csv'))
+    #filter all the following data for the 'Matches' Column = Match 
+    #also filter for the 'is_date_after' column for TRUE 
+    #convert the string in 'Date' and 'Date Created' into date time 
+        #ensure that the format for intaking the value is flexible and able to process different mm/dd/yy combinations 
+        #convert to epoch time 
     #pull donor emails and date --> create a dictionary where donor emails= key date = value [dictionary named Donors]
     #pull emails and date created --> make a dictionary where emails = key and date created = value [dictionary name acquisition]
     #loop through donors and find any keys with duplicate values 
     #take the earliest date from date 
     #drop other values 
+    #create a list to hold the values for the amount of days between adding and donating 
     #Grab each key from Donors dictionary and find matching key in Acquisition, where there is no matching key, those keys can be dropped 
     #where there is a matching key, subtract the corresponding value in Donors from the value (date created) in Aquisiton
+    #convert epoch time of new element (time between aquisition and donors) back to days 
+    #group the new list by days being the same value 
     #create a bar chart where the x axis is days since Acquisition and y is how many donors donated after that many days 
     #render the template to timechart.html 
